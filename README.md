@@ -58,10 +58,12 @@ There is still a lot of work ahead.
 ## Build Requirements
 
 Recommended (Termux-based workflow):
-- Termux (Essential for the bundling process)
-- Android SDK
-- Termux NDK
-- ADB (optional but highly recommended)
+- **Termux** (Essential for the bundling process)
+- **Android SDK** (Command-line tools)
+- **Android NDK** (Termux version recommended)
+- **Ninja** (`pkg install ninja`) - Essential for CMake builds
+- **CMake** (`pkg install cmake`)
+- **ADB** (optional but highly recommended for auto-deployment)
 
 While Android Studio can be used for general development, the **`bundlelibs.py`** script (typically invoked via `build.sh`) **must** be executed inside a Termux environment. This script is responsible for pulling, patching, and preparing the Linux userland libraries directly from your Termux installation.
 
