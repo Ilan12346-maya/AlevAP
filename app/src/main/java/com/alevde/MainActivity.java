@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean filterOutWinKey = false;
     boolean useTermuxEKBarBehaviour = false;
     private boolean isInPictureInPictureMode = false;
+    private Process logcatProcess;
 
     public static Prefs prefs = null;
 
@@ -156,11 +157,85 @@ public class MainActivity extends AppCompatActivity {
         return instance;
     }
 
+    private void initLogger() {
+        // 1. Setup Crash Handler
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            StringBuilder crashReport = new StringBuilder();
+            crashReport.append("!!! FATAL CRASH !!!\n");
+            crashReport.append("Thread: ").append(thread.getName()).append("\n\n");
+            crashReport.append(Log.getStackTraceString(throwable)).append("\n");
+            crashReport.append("\n--- RECENT LOGS ---\n");
+            
+            try {
+                File logFile = new File(getFilesDir(), "usr/tmp/alevde.log");
+                if (logFile.exists()) {
+                    // Read last 100KB to stay within intent size limits
+                    long size = logFile.length();
+                    long start = Math.max(0, size - 100 * 1024);
+                    try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(logFile, "r")) {
+                        raf.seek(start);
+                        byte[] bytes = new byte[(int) (size - start)];
+                        raf.readFully(bytes);
+                        crashReport.append(new String(bytes));
+                    }
+                } else {
+                    crashReport.append("(Log file missing)");
+                }
+            } catch (Exception e) {
+                crashReport.append("(Failed to attach logs: ").append(e.getMessage()).append(")");
+            }
+
+            // Start CrashActivity
+            try {
+                Intent intent = new Intent(this, CrashActivity.class);
+                intent.putExtra("error", crashReport.toString());
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.e("AlevCrash", "Could not start CrashActivity", e);
+            }
+            
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(1);
+        });
+
+        // 2. Start Logcat Capture
+        new Thread(() -> {
+            try {
+                // Kill previous logcat if any
+                if (logcatProcess != null) logcatProcess.destroy();
+                
+                // Clear old log slightly to prevent infinite growth
+                File logFile = new File(getFilesDir(), "usr/tmp/alevde.log");
+                // Optional: if (logFile.length() > 5 * 1024 * 1024) logFile.delete();
+
+                // Run logcat
+                ProcessBuilder pb = new ProcessBuilder("logcat", "-v", "threadtime", "*:V");
+                logcatProcess = pb.start();
+                
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(logcatProcess.getInputStream()));
+                     FileOutputStream fos = new FileOutputStream(logFile, true)) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        fos.write((line + "\n").getBytes());
+                        // Simple flush strategy could be added here if needed, 
+                        // but OS buffering is usually fine for a log file.
+                    }
+                }
+            } catch (Exception e) {
+                // If logger fails, we can't really log it anywhere except maybe standard Log.e
+                Log.e("AlevLogger", "Logcat capture failed", e);
+            }
+        }).start();
+    }
+
     @Override
     @SuppressLint({"AppCompatMethod", "ObsoleteSdkInt", "ClickableViewAccessibility", "WrongConstant", "UnspecifiedRegisterReceiverFlag"})
     protected void onCreate(Bundle savedInstanceState) {
         Log.i(getPackageName(), "Starting " + getPackageName() + " version " + BuildConfig.VERSION_NAME);
         super.onCreate(savedInstanceState);
+        
+        initLogger(); // Initialize logger first
 
         prefs = new Prefs(this);
         int modeValue = Integer.parseInt(prefs.touchMode.get()) - 1;
@@ -336,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Share current APK path with the terminal script
         try {
-            java.io.File pathFile = new java.io.File(internalUsrTmp, "alevjd.path");
+            java.io.File pathFile = new java.io.File(internalUsrTmp, "alevde.path");
             java.io.FileWriter writer = new java.io.FileWriter(pathFile);
             writer.write(getApplicationInfo().sourceDir);
             writer.close();
@@ -353,7 +428,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Start log monitoring thread
         new Thread(() -> {
-            java.io.File logFile = new java.io.File(internalUsrTmp, "alevjd.log");
+            java.io.File logFile = new java.io.File(internalUsrTmp, "alevde.log");
             long lastPointer = 0;
             while (!isFinishing()) {
                 if (logFile.exists()) {
@@ -387,6 +462,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (logcatProcess != null) {
+            logcatProcess.destroy();
+        }
         unregisterReceiver(receiver);
         super.onDestroy();
     }
@@ -1130,7 +1208,7 @@ public class MainActivity extends AppCompatActivity {
                 "rm -f \"$TMPDIR/server.log\"\n" +
                 "export LD_LIBRARY_PATH=\"" + getFilesDir() + "/usr/lib:$LIBDIR\"\n" +
                 "export PATH=\"" + usrBin.getAbsolutePath() + ":$LIBDIR:$PATH\"\n" +
-                "exec /system/bin/app_process -Xnoimage-dex2oat / com.alevde.CmdEntryPoint :1 > \"$TMPDIR/server.log\" 2>&1 &\n";
+                "exec /system/bin/app_process -Xnoimage-dex2oat / com.alevde.CmdEntryPoint :1 >> \"$TMPDIR/alevde.log\" 2>&1 &\n";
         
         try (FileOutputStream fos = new FileOutputStream(script)) {
             fos.write(content.getBytes());

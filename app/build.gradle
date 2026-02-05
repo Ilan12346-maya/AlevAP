@@ -19,8 +19,8 @@ android {
         applicationId "com.alevde"
         minSdkVersion 26
         targetSdkVersion 28
-        versionCode 156
-        versionName "v0.3.0-cv156"
+        versionCode 160
+        versionName "v0.3.0-cv160"
         buildConfigField "String", "COMMIT", "\"" + ("git rev-parse HEAD\n".execute().getText().trim() ?: (System.getenv('CURRENT_COMMIT') ?: "NO_COMMIT")) + "\""
         externalNativeBuild {
             cmake {

@@ -11,7 +11,7 @@ import argparse
 
 ### --- KONFIGURATION (HIER ANPASSEN) --- ###
 
-PROJECT_NAME = "alevjd"
+PROJECT_NAME = "alevde"
 VERSION_FILE_PATH = 'app/build.gradle'
 
 VERSION_NAME_REGEX = r'versionName\s+"(v[\d\.]+)'

@@ -124,11 +124,11 @@ def bundle():
             f.write(content)
 
     print(f"Patching com.termux -> {APP_PKG} ...")
-    run_cmd(f"find {ASSET_DIR} -type f -exec sed -i 's/com.termux/{APP_PKG}/g; s/com.alevap/{APP_PKG}/g; s/com.alevjd/{APP_PKG}/g' {{}} +")
+    run_cmd(f"find {ASSET_DIR} -type f -exec sed -i 's/com.termux/{APP_PKG}/g; s/com.alevap/{APP_PKG}/g; s/com.alevde/{APP_PKG}/g' {{}} +")
 
     print("Binary Patching...")
     # This line is targeted by renamepackage.py
-    run_cmd(f"find {JNILIBS} -type f -name '*.so' -exec sed -i 's/com.termux/{APP_PKG}/g; s/com.alevap/{APP_PKG}/g; s/com.alevjd/{APP_PKG}/g' {{}} +")
+    run_cmd(f"find {JNILIBS} -type f -name '*.so' -exec sed -i 's/com.termux/{APP_PKG}/g; s/com.alevap/{APP_PKG}/g; s/com.alevde/{APP_PKG}/g' {{}} +")
 
     print("Done.")
 

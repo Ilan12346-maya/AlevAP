@@ -13,7 +13,7 @@ def run_cmd(cmd, cwd=None):
 def rename_package():
     if len(sys.argv) != 2:
         print("Usage: python3 renamepackage.py <new_name>")
-        print("Example: python3 renamepackage.py alevjd")
+        print("Example: python3 renamepackage.py alevde")
         sys.exit(1)
 
     new_name = sys.argv[1].lower()
