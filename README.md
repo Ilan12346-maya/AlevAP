@@ -40,7 +40,7 @@ My personal target is **Need for Speed Underground** running on Android with a f
 
 ## Current Status
 
-- Version: 0.0.3
+- Version: 0.3.0
 - Standalone APK works on devices without Termux
 - X server is functional
 - Basic apps and window manager included
