@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Automatically generate debug keystore if it doesn't exist
+def keystoreFile = file('testkey_untrusted.jks')
+if (!keystoreFile.exists()) {
+    println "Generating debug keystore..."
+    def cmd = ["keytool", "-genkey", "-v", "-keystore", keystoreFile.absolutePath, "-alias", "alias", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-storepass", "xrj45yWGLbsO7W0v", "-keypass", "xrj45yWGLbsO7W0v", "-dname", "CN=test, OU=test, O=test, L=test, S=test, C=US"]
+    def proc = cmd.execute()
+    proc.waitForProcessOutput(System.out, System.err)
+}
+
 android {
     namespace 'com.alevap'
     //noinspection GrDeprecatedAPIUsage
@@ -10,8 +19,8 @@ android {
         applicationId "com.alevap"
         minSdkVersion 26
         targetSdkVersion 28
-        versionCode 148
-        versionName "v0.3.0-cv148"
+        versionCode 154
+        versionName "v0.3.0-cv154"
         buildConfigField "String", "COMMIT", "\"" + ("git rev-parse HEAD\n".execute().getText().trim() ?: (System.getenv('CURRENT_COMMIT') ?: "NO_COMMIT")) + "\""
         externalNativeBuild {
             cmake {

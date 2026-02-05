@@ -2,8 +2,6 @@
 *~
 Makefile
 Makefile.in
-Xfuncproto.h
-Xpoll.h
 aclocal.m4
 autom4te.cache
 compile

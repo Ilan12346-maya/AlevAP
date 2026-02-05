@@ -44,6 +44,21 @@ function error_exit() {
 # Start Build Process
 echo -e "${BOLD}Starting Alevap Build Process${NC}"
 
+# Ensure missing headers are present (fallback to system headers if needed)
+# Note: Xfuncproto.h is now tracked in the repo, but this remains as a safety measure.
+MISSING_HEADER="app/src/main/cpp/xorgproto/include/X11/Xfuncproto.h"
+if [ ! -f "$MISSING_HEADER" ]; then
+    header "[0/5] Restoring Environment"
+    info "Header $MISSING_HEADER missing. Attempting to pull from system..."
+    mkdir -p "$(dirname "$MISSING_HEADER")"
+    if [ -f "$PREFIX/include/X11/Xfuncproto.h" ]; then
+        cp "$PREFIX/include/X11/Xfuncproto.h" "$MISSING_HEADER"
+        success "Header restored from system."
+    else
+        echo -e "${YELLOW}[WARN] Could not find Xfuncproto.h in system. Build might fail.${NC}"
+    fi
+fi
+
 # [1/5] Backup
 header "[1/5] Backing up project"
 rm -f LAST_BACKUP_NAME
